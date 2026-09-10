@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel del Encargado</title>
+    <link rel="stylesheet" th:href="@{/css/uteq.css}">
+</head>
+<body>
+    <div class="nav">
+        <img th:src="@{/img/uteq-v1.png}" alt="UTEQ" class="nav-logo">
+        <div class="links">
+            <a th:href="@{/encargado/panel}">Cola</a>
+            <a th:href="@{/encargado/reporte}">Reporte</a>
+            <a th:href="@{/encargado/perfil}">Mi perfil</a>
+            <form class="logout-form" th:action="@{/auth/logout}" method="post">
+                <button type="submit" class="logout-btn">Cerrar sesión</button>
+            </form>
+        </div>
+    </div>
+    <div class="content">
+        <h1>Cola de Atención</h1>
+
+        <div class="error" th:if="${error}" th:text="${error}"></div>
+        <div class="success" th:if="${mensaje}" th:text="${mensaje}"></div>
+
+        <div class="stats">
+            <div class="card">
+                <div class="num" th:text="${enCola}">0</div>
+                <div class="lbl">En espera</div>
+            </div>
+            <div class="card atencion">
+                <div class="num" th:text="${enAtencion}">0</div>
+                <div class="lbl">En atención</div>
+            </div>
+            <div class="card no-show">
+                <div class="num" th:text="${noPresentados}">0</div>
+                <div class="lbl">No presentados</div>
+            </div>
+        </div>
+
+        <div class="panel-table">
+            <table>
+                <thead>
+                    <tr><th>Turno</th><th>Servicio</th><th>Estudiante</th><th>Estado</th><th>Hora registro</th><th style="text-align:right">Acciones</th></tr>
+                </thead>
+                <tbody>
+                    <tr th:each="a : ${cola}">
+                        <td class="turno" th:text="${a.turnoTexto}"></td>
+                        <td class="servicio" th:text="${a.servicio.nombre}"></td>
+                        <td class="estudiante" th:text="${a.estudiante.nombres} + ' ' + ${a.estudiante.apellidos}"></td>
+                        <td>
+                            <span th:classappend="${a.estado.name() == 'ESPERANDO'} ? 'badge badge-esperando' : (${a.estado.name() == 'EN_ATENCION'} ? 'badge badge-atencion' : 'badge badge-no-presento')"
+                                  th:text="${a.estado.name() == 'ESPERANDO'} ? 'En espera' : (${a.estado.name() == 'EN_ATENCION'} ? 'En atención' : 'No presentado')"></span>
+                        </td>
+                        <td th:text="${#temporals.format(a.fechaHoraRegistro, 'HH:mm')}"></td>
+                        <td class="actions">
+                            <form th:if="${a.estado.name() == 'EN_ATENCION'}"
+                                  th:action="@{/encargado/finalizar/{id}(id=${a.id})}" method="post" style="display:inline">
+                                <button type="submit" class="btn btn-success">Marcar atendido</button>
+                            </form>
+
+                            <th:block th:if="${a.estado.name() == 'ESPERANDO' and !tieneAtencionEnCurso and siguientes.contains(a.id)}">
+                                <form th:action="@{/encargado/atender/{id}(id=${a.id})}" method="post" style="display:inline">
+                                    <button type="submit" class="btn btn-primary">Atender</button>
+                                </form>
+                                <form th:action="@{/encargado/no-presento/{id}(id=${a.id})}" method="post" style="display:inline">
+                                    <button type="submit" class="btn btn-warning"
+                                            onclick="return confirm('¿Marcar como no presentado?')">No se presentó</button>
+                                </form>
+                            </th:block>
+                            <span class="aviso"
+                                  th:if="${a.estado.name() == 'ESPERANDO' and (tieneAtencionEnCurso or !siguientes.contains(a.id))}"
+                                  th:text="${tieneAtencionEnCurso ? 'Atención en curso' : 'En espera de turno anterior'}"></span>
+
+                            <form th:if="${a.estado.name() == 'NO_SE_PRESENTO'}"
+                                  th:action="@{/encargado/revertir/{id}(id=${a.id})}" method="post" style="display:inline"
+                                  th:attr="data-until=${a.ultimoCambioEstado.plusMinutes(2).toString()}">
+                                <button type="submit" class="btn btn-info">Revertir</button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(cola)}">
+                        <td colspan="6" class="empty">No hay estudiantes en la cola</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        (function () {
+            var formularios = document.querySelectorAll('form[data-until]');
+            if (!formularios.length) { return; }
+            function ocultarVencidos() {
+                var ahora = new Date();
+                formularios.forEach(function (f) {
+                    if (ahora > new Date(f.getAttribute('data-until'))) {
+                        f.style.display = 'none';
+                    }
+                });
+            }
+            ocultarVencidos();
+            setInterval(ocultarVencidos, 1000);
+        })();
+    </script>
+    <div class="footer-version">Sistema de registro de turnos v1.0</div>
+</body>
+</html>

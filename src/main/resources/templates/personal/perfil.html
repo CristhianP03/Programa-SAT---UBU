@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi perfil</title>
+    <link rel="stylesheet" th:href="@{/css/uteq.css}">
+</head>
+<body>
+    <div class="nav">
+        <img th:src="@{/img/uteq-v1.png}" alt="UTEQ" class="nav-logo">
+        <div th:if="${esAdmin}" class="links">
+            <a th:href="@{/admin/dashboard}">Pantalla principal</a>
+            <a th:href="@{/admin/reportes}">Reportes</a>
+            <a th:href="@{/admin/usuarios}">Usuarios</a>
+            <a th:href="@{/admin/servicios}">Servicios</a>
+            <a th:href="@{/admin/perfil}">Mi perfil</a>
+            <form class="logout-form" th:action="@{/auth/logout}" method="post">
+                <button type="submit" class="logout-btn">Cerrar sesión</button>
+            </form>
+        </div>
+        <div th:unless="${esAdmin}" class="links">
+            <a th:href="@{/encargado/panel}">Cola</a>
+            <a th:href="@{/encargado/reporte}">Reporte</a>
+            <a th:href="@{/encargado/perfil}">Mi perfil</a>
+            <form class="logout-form" th:action="@{/auth/logout}" method="post">
+                <button type="submit" class="logout-btn">Cerrar sesión</button>
+            </form>
+        </div>
+    </div>
+    <div class="content narrow">
+        <h1>Mi perfil</h1>
+
+        <div class="error" th:if="${error}" th:text="${error}"></div>
+        <div class="success" th:if="${mensaje}" th:text="${mensaje}"></div>
+
+        <form th:action="${esAdmin} ? @{/admin/perfil} : @{/encargado/perfil}" method="post">
+            <div class="card">
+                <h2>Datos personales</h2>
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="nombres">Nombres</label>
+                        <input type="text" id="nombres" name="nombres" th:value="${personal.nombres}" required>
+                    </div>
+                    <div class="field">
+                        <label for="apellidos">Apellidos</label>
+                        <input type="text" id="apellidos" name="apellidos" th:value="${personal.apellidos}" required>
+                    </div>
+                    <div class="field">
+                        <label for="usuario">Usuario</label>
+                        <input type="text" id="usuario" name="usuario" th:value="${personal.usuario}" required maxlength="50">
+                        <span class="hint">Nombre de usuario para el login.</span>
+                    </div>
+                    <div class="field">
+                        <label for="correo">Correo</label>
+                        <input type="email" id="correo" name="correo" th:value="${personal.correo}" required>
+                        <span class="hint">Si cambias el usuario o el correo, deberás iniciar sesión de nuevo.</span>
+                    </div>
+                    <div class="field">
+                        <label>Rol</label>
+                        <input type="text" th:value="${personal.rol}" disabled>
+                    </div>
+                    <div class="field" th:if="${!esAdmin}">
+                        <label>Área</label>
+                        <input type="text" th:value="${personal.area != null ? personal.area.nombre : '-'}" disabled>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Cambiar contraseña</h2>
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="contrasenaActual">Contraseña actual</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="contrasenaActual" name="contrasenaActual" autocomplete="current-password">
+                            <button type="button" class="password-toggle" aria-label="Mostrar contraseña">
+                                <svg class="eye" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                <svg class="eye-off" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="nuevaContrasena">Nueva contraseña</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="nuevaContrasena" name="nuevaContrasena" autocomplete="new-password">
+                            <button type="button" class="password-toggle" aria-label="Mostrar contraseña">
+                                <svg class="eye" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                <svg class="eye-off" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                            </button>
+                        </div>
+                        <span class="hint">Mínimo 6 caracteres. Déjalo vacío para no cambiarla.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="acciones">
+                <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                <a class="btn btn-ghost"
+                   th:href="${esAdmin} ? @{/admin/dashboard} : @{/encargado/panel}">Cancelar</a>
+            </div>
+        </form>
+    </div>
+    <div class="footer-version">Sistema de registro de turnos v1.0</div>
+    <script>
+        document.querySelectorAll('.password-toggle').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var input = btn.parentElement.querySelector('input');
+                var mostrar = input.type === 'password';
+                input.type = mostrar ? 'text' : 'password';
+                btn.classList.toggle('visible', mostrar);
+                btn.setAttribute('aria-label', mostrar ? 'Ocultar contraseña' : 'Mostrar contraseña');
+            });
+        });
+    </script>
+</body>
+</html>
