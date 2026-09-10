@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Servicios</title>
+    <link rel="stylesheet" th:href="@{/css/uteq.css}">
+</head>
+<body>
+    <div class="nav">
+        <img th:src="@{/img/uteq-v1.png}" alt="UTEQ" class="nav-logo">
+        <div>
+            <a th:href="@{/admin/dashboard}">Pantalla principal</a>
+            <a th:href="@{/admin/reportes}">Reportes</a>
+            <a th:href="@{/admin/estudiantes}">Estudiantes</a>
+            <a th:href="@{/admin/usuarios}">Usuarios</a>
+            <a th:href="@{/admin/servicios}">Servicios</a>
+            <a th:href="@{/admin/perfil}">Mi perfil</a>
+            <form class="logout-form" th:action="@{/auth/logout}" method="post">
+                <button type="submit" class="logout-btn">Cerrar sesión</button>
+            </form>
+        </div>
+    </div>
+    <div class="content">
+        <h1>Gestión de Servicios</h1>
+
+        <div class="error" th:if="${error}" th:text="${error}"></div>
+        <div class="success" th:if="${mensaje}" th:text="${mensaje}"></div>
+
+        <div class="section-title">Áreas</div>
+        <table>
+            <thead>
+                <tr><th>Nombre</th><th>Descripción</th><th>Estado</th><th>Acciones</th></tr>
+            </thead>
+            <tbody>
+                <tr th:each="a : ${areas}">
+                    <td th:text="${a.nombre}"></td>
+                    <td th:text="${a.descripcion ?: '-'}"></td>
+                    <td th:text="${a.activo ? 'Activa' : 'Inactiva'}"></td>
+                    <td>
+                        <form th:action="@{/admin/areas/estado/{id}(id=${a.id})}" method="post" style="display:inline">
+                            <button type="submit" class="btn btn-warning"
+                                    th:text="${a.activo ? 'Desactivar' : 'Activar'}"></button>
+                        </form>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="section-title">Servicios</div>
+        <table>
+            <thead>
+                <tr><th>Nombre</th><th>Área</th><th>Descripción</th><th>Estado</th><th>Acciones</th></tr>
+            </thead>
+            <tbody>
+                <tr th:each="s : ${servicios}">
+                    <td th:text="${s.nombre}"></td>
+                    <td th:text="${s.area.nombre}"></td>
+                    <td th:text="${s.descripcion ?: '-'}"></td>
+                    <td th:text="${s.activo ? 'Activo' : 'Inactivo'}"></td>
+                    <td>
+                        <form th:action="@{/admin/servicios/estado/{id}(id=${s.id})}" method="post" style="display:inline">
+                            <button type="submit" class="btn btn-warning"
+                                    th:text="${s.activo ? 'Desactivar' : 'Activar'}"></button>
+                        </form>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="footer-version">Sistema de registro de turnos v1.0</div>
+</body>
+</html>

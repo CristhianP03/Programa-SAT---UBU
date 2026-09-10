@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Administrativo</title>
+    <link rel="stylesheet" th:href="@{/css/uteq.css}">
+</head>
+<body>
+    <div class="nav">
+        <img th:src="@{/img/uteq-v1.png}" alt="UTEQ" class="nav-logo">
+        <div>
+            <a th:href="@{/admin/dashboard}">Pantalla principal</a>
+            <a th:href="@{/admin/reportes}">Reportes</a>
+            <a th:href="@{/admin/estudiantes}">Estudiantes</a>
+            <a th:href="@{/admin/usuarios}">Usuarios</a>
+            <a th:href="@{/admin/servicios}">Servicios</a>
+            <a th:href="@{/admin/perfil}">Mi perfil</a>
+            <form class="logout-form" th:action="@{/auth/logout}" method="post">
+                <button type="submit" class="logout-btn">Cerrar sesión</button>
+            </form>
+        </div>
+    </div>
+    <div class="content">
+        <h1 th:text="'Pantalla principal — ' + ${#temporals.format(fecha, 'dd/MM/yyyy')}">Pantalla principal</h1>
+
+        <div class="error" th:if="${error}" th:text="${error}"></div>
+        <div class="success" th:if="${mensaje}" th:text="${mensaje}"></div>
+
+        <div class="section-title">Hora de cierre del registro</div>
+        <form class="filter" th:action="@{/admin/hora-cierre}" method="post">
+            <div>
+                <label for="hora">Hora de cierre:</label>
+                <input type="time" id="hora" name="hora" th:value="${horaEfectiva}">
+                <small>Vacío = hora por defecto (18:00)</small>
+            </div>
+            <div>
+                <span class="badge" th:classappend="${cerrado} ? 'badge-danger' : 'badge-success'"
+                      th:text="${cerrado} ? 'Cerrado' : 'Abierto'"></span>
+            </div>
+            <button type="submit" class="btn">Guardar</button>
+        </form>
+        <p class="info">
+            Al llegar la hora de cierre, los registros en espera y en atención pasan automáticamente a "Atendido".
+            No se puede guardar una hora anterior a la hora actual.
+        </p>
+
+        <div class="resumen-grid">
+            <div th:each="entry : ${resumenDetallado}" class="resumen-card">
+                <h3 th:text="${entry.key}">Servicio</h3>
+                <div class="total"
+                     th:text="${(entry.value.get('ATENDIDO') ?: 0) + (entry.value.get('EN_ATENCION') ?: 0) + (entry.value.get('ESPERANDO') ?: 0) + (entry.value.get('NO_SE_PRESENTO') ?: 0)}">0</div>
+                <div class="desglose">
+                    <span class="item">
+                        Atendidos: <strong th:text="${entry.value.containsKey('ATENDIDO') ? entry.value.get('ATENDIDO') : 0}">0</strong>
+                    </span>
+                    <span class="item">
+                        En atencion: <strong th:text="${entry.value.containsKey('EN_ATENCION') ? entry.value.get('EN_ATENCION') : 0}">0</strong>
+                    </span>
+                    <span class="item">
+                        Esperando: <strong th:text="${entry.value.containsKey('ESPERANDO') ? entry.value.get('ESPERANDO') : 0}">0</strong>
+                    </span>
+                    <span class="item">
+                        No presentado: <strong th:text="${entry.value.containsKey('NO_SE_PRESENTO') ? entry.value.get('NO_SE_PRESENTO') : 0}">0</strong>
+                    </span>
+                </div>
+            </div>
+            <div th:if="${#maps.isEmpty(resumenDetallado)}" class="resumen-card" style="grid-column: 1 / -1; text-align: center; color: #999;">
+                No hay registros para esta fecha
+            </div>
+        </div>
+
+        <div class="resumen-grid">
+            <div th:each="entry : ${resumenPorArea}" class="resumen-card">
+                <h3 th:text="'Área: ' + ${entry.key}">Área</h3>
+                <div class="total"
+                     th:text="${(entry.value.get('ATENDIDO') ?: 0) + (entry.value.get('EN_ATENCION') ?: 0) + (entry.value.get('ESPERANDO') ?: 0) + (entry.value.get('NO_SE_PRESENTO') ?: 0)}">0</div>
+                <div class="desglose">
+                    <span class="item">
+                        Atendidos: <strong th:text="${entry.value.containsKey('ATENDIDO') ? entry.value.get('ATENDIDO') : 0}">0</strong>
+                    </span>
+                    <span class="item">
+                        En espera: <strong th:text="${entry.value.containsKey('ESPERANDO') ? entry.value.get('ESPERANDO') : 0}">0</strong>
+                    </span>
+                </div>
+            </div>
+            <div th:if="${#maps.isEmpty(resumenPorArea)}" class="resumen-card" style="grid-column: 1 / -1; text-align: center; color: #999;">
+                No hay registros por área para esta fecha
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Turno</th>
+                    <th>Estudiante</th>
+                    <th>Servicio</th>
+                    <th>Estado</th>
+                    <th>Primera vez</th>
+                    <th>Fecha</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="a : ${asistencias}">
+                    <td th:text="${a.turnoTexto}"></td>
+                    <td th:text="${a.estudiante.nombres} + ' ' + ${a.estudiante.apellidos}"></td>
+                    <td th:text="${a.servicio.nombre}"></td>
+                    <td>
+                        <span class="badge" th:classappend="${a.estado.name() == 'ATENDIDO'} ? 'badge-success' : (${a.estado.name() == 'EN_ATENCION'} ? 'badge-warning' : (${a.estado.name() == 'NO_SE_PRESENTO'} ? 'badge-danger' : 'badge-info'))"
+                              th:text="${a.estado}"></span>
+                    </td>
+                    <td>
+                        <span class="badge badge-nuevo" th:if="${a.esPrimeraVez}">Si</span>
+                        <span th:unless="${a.esPrimeraVez}">No</span>
+                    </td>
+                    <td th:text="${#temporals.format(a.fechaHoraRegistro, 'dd/MM HH:mm')}"></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(asistencias)}">
+                    <td colspan="6" style="text-align:center;color:#999;padding:30px">No hay registros para esta fecha</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="footer-version">Sistema de registro de turnos v1.0</div>
+</body>
+</html>
