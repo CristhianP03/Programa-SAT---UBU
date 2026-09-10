@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes</title>
+    <link rel="stylesheet" th:href="@{/css/uteq.css}">
+</head>
+<body>
+    <div class="nav">
+        <img th:src="@{/img/uteq-v1.png}" alt="UTEQ" class="nav-logo">
+        <div>
+            <a th:href="@{/admin/dashboard}">Pantalla principal</a>
+            <a th:href="@{/admin/reportes}">Reportes</a>
+            <a th:href="@{/admin/usuarios}">Usuarios</a>
+            <a th:href="@{/admin/servicios}">Servicios</a>
+            <a th:href="@{/admin/perfil}">Mi perfil</a>
+            <form class="logout-form" th:action="@{/auth/logout}" method="post">
+                <button type="submit" class="logout-btn">Cerrar sesión</button>
+            </form>
+        </div>
+    </div>
+    <div class="content">
+        <h1>Reportes</h1>
+
+        <form class="filter" th:action="@{/admin/reportes}" method="get">
+            <div>
+                <label for="desde">Desde:</label>
+                <input type="date" id="desde" name="desde" th:value="${desde}">
+            </div>
+            <div>
+                <label for="hasta">Hasta:</label>
+                <input type="date" id="hasta" name="hasta" th:value="${hasta}">
+            </div>
+            <div>
+                <label for="areaId">Área:</label>
+                <select id="areaId" name="areaId" onchange="this.form.submit()">
+                    <option value="">Todas las áreas</option>
+                    <option th:each="area : ${areas}" th:value="${area.id}" th:text="${area.nombre}"
+                            th:selected="${areaId != null && areaId == area.id}"></option>
+                </select>
+            </div>
+            <div>
+                <label for="servicioId">Servicio:</label>
+                <select id="servicioId" name="servicioId">
+                    <option value="">Todos los servicios</option>
+                    <option th:each="s : ${servicios}" th:value="${s.id}" th:text="${s.nombre}"
+                            th:selected="${servicioId != null && servicioId == s.id}"></option>
+                </select>
+            </div>
+            <div>
+                <label for="estado">Estado:</label>
+                <select id="estado" name="estado">
+                    <option value="">Todos los estados</option>
+                    <option th:each="e : ${estados}" th:if="${e.name() != 'CANCELADO'}"
+                            th:value="${e.name()}"
+                            th:selected="${estado != null && estado == e.name()}"
+                            th:text="${e.name() == 'ATENDIDO' ? 'Atendido' : (e.name() == 'EN_ATENCION' ? 'En atención' : (e.name() == 'ESPERANDO' ? 'En espera' : (e.name() == 'NO_SE_PRESENTO' ? 'No se presentó' : 'Pendiente de verificación')))}"></option>
+                </select>
+            </div>
+            <div>
+                <label for="busqueda">Buscar:</label>
+                <input type="text" id="busqueda" name="busqueda" th:value="${busqueda}"
+                       placeholder="Cédula, nombres, apellidos o correo">
+            </div>
+            <button type="submit" class="btn">Consultar</button>
+            <a class="btn btn-secundario" th:href="@{/admin/reportes}">Limpiar</a>
+        </form>
+
+        <div class="section-title">Columnas a exportar (por defecto se muestran todas)</div>
+        <form class="columnas" th:action="@{/admin/reportes}" method="get" id="formExportar">
+            <input type="hidden" name="desde" th:value="${desde}">
+            <input type="hidden" name="hasta" th:value="${hasta}">
+            <input type="hidden" name="areaId" th:value="${areaId}">
+            <input type="hidden" name="servicioId" th:value="${servicioId}">
+            <input type="hidden" name="estado" th:value="${estado}">
+            <input type="hidden" name="busqueda" th:value="${busqueda}">
+            <input type="hidden" name="orden" th:value="${orden}">
+            <input type="hidden" name="dir" th:value="${dir}">
+            <label><input type="checkbox" name="columnas" value="numero" checked> N°</label>
+            <label><input type="checkbox" name="columnas" value="correo" checked> Correo</label>
+            <label><input type="checkbox" name="columnas" value="sexo" checked> Sexo</label>
+            <label><input type="checkbox" name="columnas" value="etnia" checked> Etnia</label>
+            <label><input type="checkbox" name="columnas" value="facultad" checked> Facultad</label>
+            <label><input type="checkbox" name="columnas" value="carrera" checked> Carrera</label>
+            <label><input type="checkbox" name="columnas" value="area" checked> Área</label>
+            <label><input type="checkbox" name="columnas" value="servicio" checked> Servicio</label>
+            <label><input type="checkbox" name="columnas" value="estado" checked> Estado</label>
+            <label><input type="checkbox" name="columnas" value="primeraVez" checked> Primera vez</label>
+            <label><input type="checkbox" name="columnas" value="observaciones" checked> Observaciones</label>
+            <label><input type="checkbox" name="columnas" value="atendidoPor" checked> Atendido por</label>
+            <label><input type="checkbox" name="columnas" value="registro" checked> Registro</label>
+            <label><input type="checkbox" name="columnas" value="atencion" checked> Atención</label>
+            <label><input type="checkbox" name="columnas" value="cierre" checked> Cierre</label>
+            <span class="info">Estudiante y Cédula siempre se incluyen en la exportación.</span>
+            <button type="submit" class="btn btn-exportar"
+                    th:formaction="@{/admin/reportes/excel}">Exportar Excel</button>
+            <button type="submit" class="btn btn-exportar"
+                    th:formaction="@{/admin/reportes/pdf}">Exportar PDF</button>
+        </form>
+
+        <div class="resumen">
+            <div class="resumen-card">
+                <h3 th:text="${total}">0</h3>
+                <p>Total de registros</p>
+            </div>
+            <div class="resumen-card">
+                <h3 th:text="${resumenEstados['ATENDIDO'] ?: 0}">0</h3>
+                <p>Atendidos</p>
+            </div>
+            <div class="resumen-card">
+                <h3 th:text="${resumenEstados['EN_ATENCION'] ?: 0}">0</h3>
+                <p>En atención</p>
+            </div>
+            <div class="resumen-card">
+                <h3 th:text="${resumenEstados['ESPERANDO'] ?: 0}">0</h3>
+                <p>En espera</p>
+            </div>
+            <div class="resumen-card">
+                <h3 th:text="${resumenEstados['NO_SE_PRESENTO'] ?: 0}">0</h3>
+                <p>No presentados</p>
+            </div>
+            <div class="resumen-card">
+                <h3 th:text="${resumenEstados['PENDIENTE_VERIFICACION'] ?: 0}">0</h3>
+                <p>Pendientes</p>
+            </div>
+        </div>
+
+        <div class="info-tabla" th:if="${pagina.totalPages > 1}">
+            Mostrando registros del
+            <strong th:text="${pagina.number * 10 + 1}">1</strong>
+            al
+            <strong th:text="${pagina.number * 10 + pagina.numberOfElements}"></strong>
+            de
+            <strong th:text="${total}">0</strong>.
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>
+                        <a class="sort"
+                           th:href="@{/admin/reportes(desde=${desde},hasta=${hasta},areaId=${areaId},servicioId=${servicioId},estado=${estado},busqueda=${busqueda},orden='numeroTurno',dir=${(orden == 'numeroTurno' and dir == 'asc') ? 'desc' : 'asc'})}">Nº
+                            <span th:if="${orden == 'numeroTurno' and dir == 'asc'}">▲</span>
+                            <span th:if="${orden == 'numeroTurno' and dir == 'desc'}">▼</span>
+                        </a>
+                    </th>
+                    <th>
+                        <a class="sort"
+                           th:href="@{/admin/reportes(desde=${desde},hasta=${hasta},areaId=${areaId},servicioId=${servicioId},estado=${estado},busqueda=${busqueda},orden='estudiante.nombres',dir=${(orden == 'estudiante.nombres' and dir == 'asc') ? 'desc' : 'asc'})}">Estudiante
+                            <span th:if="${orden == 'estudiante.nombres' and dir == 'asc'}">▲</span>
+                            <span th:if="${orden == 'estudiante.nombres' and dir == 'desc'}">▼</span>
+                        </a>
+                    </th>
+                    <th>
+                        <a class="sort"
+                           th:href="@{/admin/reportes(desde=${desde},hasta=${hasta},areaId=${areaId},servicioId=${servicioId},estado=${estado},busqueda=${busqueda},orden='estudiante.cedula',dir=${(orden == 'estudiante.cedula' and dir == 'asc') ? 'desc' : 'asc'})}">Cédula
+                            <span th:if="${orden == 'estudiante.cedula' and dir == 'asc'}">▲</span>
+                            <span th:if="${orden == 'estudiante.cedula' and dir == 'desc'}">▼</span>
+                        </a>
+                    </th>
+                    <th>Correo</th>
+                    <th>Sexo</th>
+                    <th>Etnia</th>
+                    <th>Facultad</th>
+                    <th>Carrera</th>
+                    <th>
+                        <a class="sort"
+                           th:href="@{/admin/reportes(desde=${desde},hasta=${hasta},areaId=${areaId},servicioId=${servicioId},estado=${estado},busqueda=${busqueda},orden='area',dir=${(orden == 'area' and dir == 'asc') ? 'desc' : 'asc'})}">Área
+                            <span th:if="${orden == 'area' and dir == 'asc'}">▲</span>
+                            <span th:if="${orden == 'area' and dir == 'desc'}">▼</span>
+                        </a>
+                    </th>
+                    <th>
+                        <a class="sort"
+                           th:href="@{/admin/reportes(desde=${desde},hasta=${hasta},areaId=${areaId},servicioId=${servicioId},estado=${estado},busqueda=${busqueda},orden='servicio.nombre',dir=${(orden == 'servicio.nombre' and dir == 'asc') ? 'desc' : 'asc'})}">Servicio
+                            <span th:if="${orden == 'servicio.nombre' and dir == 'asc'}">▲</span>
+                            <span th:if="${orden == 'servicio.nombre' and dir == 'desc'}">▼</span>
+                        </a>
+                    </th>
+                    <th>
+                        <a class="sort"
+                           th:href="@{/admin/reportes(desde=${desde},hasta=${hasta},areaId=${areaId},servicioId=${servicioId},estado=${estado},busqueda=${busqueda},orden='estado',dir=${(orden == 'estado' and dir == 'asc') ? 'desc' : 'asc'})}">Estado
+                            <span th:if="${orden == 'estado' and dir == 'asc'}">▲</span>
+                            <span th:if="${orden == 'estado' and dir == 'desc'}">▼</span>
+                        </a>
+                    </th>
+                    <th>Primera vez</th>
+                    <th>
+                        <a class="sort"
+                           th:href="@{/admin/reportes(desde=${desde},hasta=${hasta},areaId=${areaId},servicioId=${servicioId},estado=${estado},busqueda=${busqueda},orden='fechaHoraRegistro',dir=${(orden == 'fechaHoraRegistro' and dir == 'asc') ? 'desc' : 'asc'})}">Fecha/Hora
+                            <span th:if="${orden == 'fechaHoraRegistro' and dir == 'asc'}">▲</span>
+                            <span th:if="${orden == 'fechaHoraRegistro' and dir == 'desc'}">▼</span>
+                        </a>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="a : ${asistencias}">
+                    <td th:text="${a.turnoTexto}"></td>
+                    <td th:text="${a.estudiante.nombres} + ' ' + ${a.estudiante.apellidos}"></td>
+                    <td th:text="${a.estudiante.cedula}"></td>
+                    <td th:text="${a.estudiante.correoInstitucional}"></td>
+                    <td th:text="${a.estudiante.sexo != null ? a.estudiante.sexo.nombre : '-'}"></td>
+                    <td th:text="${a.estudiante.etnia != null ? a.estudiante.etnia.nombre : '-'}"></td>
+                    <td th:text="${a.estudiante.carrera != null && a.estudiante.carrera.facultad != null ? a.estudiante.carrera.facultad.nombre : '-'}"></td>
+                    <td th:text="${a.estudiante.carrera != null ? a.estudiante.carrera.nombre : '-'}"></td>
+                    <td th:text="${a.servicio.area != null ? a.servicio.area.nombre : '-'}"></td>
+                    <td th:text="${a.servicio.nombre}"></td>
+                    <td>
+                        <span class="badge"
+                              th:classappend="${a.estado.name() == 'ATENDIDO'} ? 'badge-success' : (${a.estado.name() == 'EN_ATENCION'} ? 'badge-warning' : (${a.estado.name() == 'NO_SE_PRESENTO'} ? 'badge-danger' : (${a.estado.name() == 'CANCELADO'} ? 'badge-gray' : 'badge-info')))"
+                              th:text="${a.estado.name() == 'ATENDIDO' ? 'Atendido' : (a.estado.name() == 'EN_ATENCION' ? 'En atención' : (a.estado.name() == 'ESPERANDO' ? 'En espera' : (a.estado.name() == 'NO_SE_PRESENTO' ? 'No se presentó' : (a.estado.name() == 'CANCELADO' ? 'Cancelado' : 'Pendiente de verificación'))))}"></span>
+                    </td>
+                    <td>
+                        <span class="badge badge-nuevo" th:if="${a.esPrimeraVez}">Sí</span>
+                        <span th:unless="${a.esPrimeraVez}">No</span>
+                    </td>
+                    <td th:text="${#temporals.format(a.fechaHoraRegistro, 'dd/MM/yyyy HH:mm')}"></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(asistencias)}">
+                    <td colspan="13" class="empty">No hay registros que coincidan con los filtros</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="section-title">Gráficas por categoría (respeta filtros y fecha; vacío = todo)</div>
+        <div style="margin-bottom:10px">
+            <div style="margin-bottom:6px"><label><input type="checkbox" class="grafChk" value="sexo"> Sexo</label> <label><input type="checkbox" class="grafChk" value="etnia"> Etnia</label> <label><input type="checkbox" class="grafChk" value="facultad"> Facultad</label> <label><input type="checkbox" class="grafChk" value="carrera"> Carrera</label> <label><input type="checkbox" class="grafChk" value="area"> Área</label> <label><input type="checkbox" class="grafChk" value="servicio"> Servicio</label> <label><input type="checkbox" class="grafChk" value="estado"> Estado</label></div>
+            <button class="btn" onclick="generarGraficas()">Ver gráficas seleccionadas</button>
+        </div>
+        <div id="graficasContainer"></div>
+        <form id="formGraficasPdf" th:action="@{/admin/reportes/pdf-con-graficas}" method="post" style="margin:8px 0">
+            <input type="hidden" name="desde" th:value="${desde}"><input type="hidden" name="hasta" th:value="${hasta}"><input type="hidden" name="areaId" th:value="${areaId}"><input type="hidden" name="servicioId" th:value="${servicioId}"><input type="hidden" name="estado" th:value="${estado}"><input type="hidden" name="busqueda" th:value="${busqueda}"><input type="hidden" name="orden" th:value="${orden}"><input type="hidden" name="dir" th:value="${dir}">
+            <div id="hiddenGraficas"></div>
+            <button type="button" class="btn btn-exportar" onclick="exportarPdfConGraficas()">Exportar PDF (tabla + gráficas seleccionadas)</button>
+        </form>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+        var charts=[];
+        function generarGraficas(){
+          var cats=[...document.querySelectorAll('.grafChk:checked')].map(c=>c.value);
+          if(!cats.length){alert('Selecciona al menos una gráfica');return;}
+          var container=document.getElementById('graficasContainer'); container.innerHTML=''; charts=[];
+          cats.forEach(function(cat){
+            var canvas=document.createElement('canvas'); canvas.height=120; canvas.style.maxHeight='280px'; canvas.style.marginBottom='16px';
+            container.appendChild(canvas);
+            var p=new URLSearchParams({desde:document.getElementById('desde').value||'', hasta:document.getElementById('hasta').value||'', areaId:document.getElementById('areaId').value||'', servicioId:document.getElementById('servicioId').value||'', estado:document.getElementById('estado').value||'', busqueda:document.getElementById('busqueda').value||'', categoria:cat});
+            fetch('/admin/reportes/datos?'+p.toString()).then(r=>r.json()).then(data=>{
+              var labels=Object.keys(data); var vals=Object.values(data);
+              var ch=new Chart(canvas,{type:'bar',data:{labels:labels,datasets:[{label:cat,data:vals,backgroundColor:'#1B7505'}]},options:{responsive:true,plugins:{legend:{display:false},title:{display:true,text:'Por '+cat}}}});
+              charts.push({cat:cat, canvas:canvas});
+            });
+          });
+        }
+        function exportarPdfConGraficas(){
+          var sel=[...document.querySelectorAll('.grafChk:checked')].map(c=>c.value);
+          if(!sel.length){alert('Selecciona gráficas');return;}
+          if(charts.length!==sel.length){alert('Espera a que carguen las gráficas y vuelve a intentar');return;}
+          var hidden=document.getElementById('hiddenGraficas'); hidden.innerHTML='';
+          charts.forEach(function(c){
+            var img=c.canvas.toDataURL('image/png');
+            var inp=document.createElement('input'); inp.type='hidden'; inp.name='graficas'; inp.value=img; hidden.appendChild(inp);
+            var inp2=document.createElement('input'); inp2.type='hidden'; inp2.name='graficasCategorias'; inp2.value=c.cat; hidden.appendChild(inp2);
+          });
+          document.getElementById('formGraficasPdf').submit();
+        }
+        </script>
+
+        <div class="paginacion" th:if="${pagina.totalPages > 1}">
+            <a th:if="${pagina.hasPrevious()}"
+               th:href="@{/admin/reportes(desde=${desde},hasta=${hasta},areaId=${areaId},servicioId=${servicioId},estado=${estado},busqueda=${busqueda},orden=${orden},dir=${dir},page=${pagina.number - 1})}">« Anterior</a>
+            <a th:each="n : ${paginas}"
+               th:href="@{/admin/reportes(desde=${desde},hasta=${hasta},areaId=${areaId},servicioId=${servicioId},estado=${estado},busqueda=${busqueda},orden=${orden},dir=${dir},page=${n})}"
+               th:text="${n + 1}"
+               th:classappend="${n == pagina.number} ? 'activa'"></a>
+            <a th:if="${pagina.hasNext()}"
+               th:href="@{/admin/reportes(desde=${desde},hasta=${hasta},areaId=${areaId},servicioId=${servicioId},estado=${estado},busqueda=${busqueda},orden=${orden},dir=${dir},page=${pagina.number + 1})}">Siguiente »</a>
+        </div>
+    </div>
+    <div class="footer-version">Sistema de registro de turnos v1.0</div>
+</body>
+</html>

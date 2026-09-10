@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Estudiantes</title><link rel="stylesheet" th:href="@{/css/uteq.css}"></head>
+<body>
+<div class="nav">
+    <img th:src="@{/img/uteq-v1.png}" alt="UTEQ" class="nav-logo">
+    <div><a th:href="@{/admin/dashboard}">Pantalla principal</a><a th:href="@{/admin/reportes}">Reportes</a><a th:href="@{/admin/estudiantes}">Estudiantes</a><a th:href="@{/admin/usuarios}">Usuarios</a><a th:href="@{/admin/servicios}">Servicios</a><a th:href="@{/admin/perfil}">Mi perfil</a><form class="logout-form" th:action="@{/auth/logout}" method="post"><button type="submit" class="logout-btn">Cerrar sesión</button></form></div>
+</div>
+<div class="content">
+<h1>Estudiantes</h1>
+<div class="error" th:if="${error}" th:text="${error}"></div>
+<div class="success" th:if="${mensaje}" th:text="${mensaje}"></div>
+<table>
+<thead><tr><th>Cédula</th><th>Estudiante</th><th>Correo</th><th>Sexo</th><th>Etnia</th><th>Facultad</th><th>Carrera</th><th>Acción</th></tr></thead>
+<tbody>
+<tr th:each="e : ${estudiantes}">
+<td th:text="${e.cedula}"></td>
+<td th:text="${e.nombres + ' ' + e.apellidos}"></td>
+<td th:text="${e.correoInstitucional}"></td>
+<td th:text="${e.sexo != null ? e.sexo.nombre : '-'}"></td>
+<td th:text="${e.etnia != null ? e.etnia.nombre : '-'}"></td>
+<td th:text="${e.carrera != null && e.carrera.facultad != null ? e.carrera.facultad.nombre : '-'}"></td>
+<td th:text="${e.carrera != null ? e.carrera.nombre : '-'}"></td>
+<td>
+<details><summary>Editar</summary>
+<form th:action="@{/admin/estudiantes/editar/{id}(id=${e.id})}" method="post" style="margin-top:8px">
+<div><label>Nombres<input type="text" name="nombres" th:value="${e.nombres}" required></label></div>
+<div><label>Apellidos<input type="text" name="apellidos" th:value="${e.apellidos}" required></label></div>
+<div><label>Correo<input type="email" name="correo" th:value="${e.correoInstitucional}" required></label></div>
+<div><label>Cédula<input type="text" th:value="${e.cedula}" disabled> <small>bloqueada</small></label></div>
+<div><label>Sexo<select name="sexoId" required><option th:each="s : ${sexos}" th:value="${s.id}" th:text="${s.nombre}" th:selected="${e.sexo != null and e.sexo.id == s.id}"></option></select></label></div>
+<div><label>Etnia<select name="etniaId" required><option th:each="et : ${etnias}" th:value="${et.id}" th:text="${et.nombre}" th:selected="${e.etnia != null and e.etnia.id == et.id}"></option></select></label></div>
+<div><label>Facultad<select onchange="cargarCarreras(this)" required><option value="">Seleccionar</option><option th:each="f : ${facultades}" th:value="${f.id}" th:text="${f.nombre}" th:selected="${e.carrera != null and e.carrera.facultad != null and e.carrera.facultad.id == f.id}"></option></select></label></div>
+<div><label>Carrera<select name="carreraId" required><option th:value="${e.carrera != null ? e.carrera.id : ''}" th:text="${e.carrera != null ? e.carrera.nombre : 'Selecciona facultad'}"></option></select></label></div>
+<button type="submit" class="btn btn-primary">Guardar</button>
+</form>
+</details>
+</td>
+</tr>
+<tr th:if="${#lists.isEmpty(estudiantes)}"><td colspan="8" class="empty">No hay estudiantes</td></tr>
+</tbody>
+</table>
+</div>
+<script>
+function cargarCarreras(sel){
+  var carreraSel = sel.closest('form').querySelector('select[name="carreraId"]');
+  carreraSel.innerHTML='<option>Cargando...</option>';
+  fetch('/estudiante/carreras?facultadId='+sel.value).then(r=>r.json()).then(d=>{ carreraSel.innerHTML=''; d.forEach(function(c){ var o=document.createElement('option'); o.value=c.id; o.textContent=c.nombre; carreraSel.appendChild(o);});});
+}
+</script>
+<div class="footer-version">Sistema de registro de turnos v1.0</div>
+</body>
+</html>
