@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error - Sistema de Bienestar Estudiantil</title>
+    <link rel="stylesheet" th:href="@{/css/uteq.css}">
+</head>
+<body class="standalone">
+    <div class="error-container">
+        <img th:src="@{/img/uteq-v2.png}" alt="UTEQ" class="logo-v2">
+        <div class="error-icon">&#9888;</div>
+        <h1>Atención</h1>
+        <p class="error-message" th:text="${error}">Ha ocurrido un error.</p>
+        <a th:href="@{/estudiante/registro}" class="btn">Volver al inicio</a>
+    </div>
+</body>
+</html>

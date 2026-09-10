@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de datos de estudiantes — Bienestar Estudiantil UTEQ</title>
+    <link rel="stylesheet" th:href="@{/css/uteq.css}">
+    <style>
+        .primera-vez-box{border:1.5px solid #1B7505;border-radius:10px;padding:14px 16px;margin-bottom:18px;background:#f6faf6}
+        .primera-vez-box h3{margin:0 0 8px 0;font-size:1.05em;color:#1B7505}
+        .primera-vez-box label{margin-right:16px;cursor:pointer}
+        .campo-sombreado{opacity:0.55;pointer-events:none;background:#e9ecef !important}
+        .auto-msg{font-size:0.85em;color:#1B7505;margin-top:4px;display:none}
+    </style>
+</head>
+<body class="standalone">
+    <div class="container wide">
+        <img th:src="@{/img/uteq-v2.png}" alt="UTEQ" class="logo-v2">
+        <h1>Registro de datos de estudiantes</h1>
+        <p class="subtitle">Sistema de Bienestar Estudiantil UTEQ</p>
+
+        <div class="error" th:if="${error}" th:text="${error}"></div>
+        <div class="success" th:if="${mensaje}" th:text="${mensaje}"></div>
+
+        <div class="error" th:if="${registroCerrado}">
+            Los registros están cerrados. El horario de registro de hoy ya terminó.
+        </div>
+
+        <!-- Dashboard primera vez -->
+        <div class="primera-vez-box" id="primeraVezBox">
+            <h3>¿Es la primera vez registrándote en este sistema?</h3>
+            <label><input type="radio" name="primeraVez" value="si" id="rbSi"> Sí, es la primera vez</label>
+            <label><input type="radio" name="primeraVez" value="no" id="rbNo"> No, ya me he registrado antes</label>
+            <div id="msgNo" class="auto-msg">Ingresa tu cédula y tus datos se autocompletarán. Solo elige Área y Servicio y da Aceptar.</div>
+            <div id="msgSi" class="auto-msg">Completa todos los campos y da clic en Registrarme.</div>
+        </div>
+
+        <form th:action="@{/estudiante/registrar}" method="post" id="formRegistro" onsubmit="return confirmarEnvio(event)">
+            <div class="section-title">Datos personales</div>
+
+            <div class="row">
+                <div class="form-group">
+                    <label for="cedula">Cédula de identidad</label>
+                    <input type="text" id="cedula" name="cedula" required
+                           pattern="\d{10}" maxlength="10"
+                           placeholder="10 dígitos" th:value="${cedula}">
+                    <div id="autoStatus" class="auto-msg"></div>
+                </div>
+                <div class="form-group">
+                    <label for="correoInstitucional">Correo institucional</label>
+                    <input type="email" id="correoInstitucional" name="correoInstitucional" required
+                           placeholder="tu@uteq.edu.ec" maxlength="100" th:value="${correo}">
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="form-group">
+                    <label for="nombres">Nombres</label>
+                    <input type="text" id="nombres" name="nombres" required
+                           placeholder="Tus nombres" maxlength="100" th:value="${nombres}">
+                </div>
+                <div class="form-group">
+                    <label for="apellidos">Apellidos</label>
+                    <input type="text" id="apellidos" name="apellidos" required
+                           placeholder="Tus apellidos" maxlength="100" th:value="${apellidos}">
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="form-group">
+                    <label for="sexoId">Sexo</label>
+                    <select id="sexoId" name="sexoId" required>
+                        <option value="">Seleccionar</option>
+                        <option th:each="s : ${sexos}" th:value="${s.id}" th:text="${s.nombre}"
+                                th:selected="${sexoId != null and sexoId == s.id}"></option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="etniaId">Etnia</label>
+                    <select id="etniaId" name="etniaId" required>
+                        <option value="">Seleccionar</option>
+                        <option th:each="e : ${etnias}" th:value="${e.id}" th:text="${e.nombre}"
+                                th:selected="${etniaId != null and etniaId == e.id}"></option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="section-title">Información académica</div>
+
+            <div class="row">
+                <div class="form-group">
+                    <label for="facultadId">Facultad</label>
+                    <select id="facultadId" name="facultadId" required onchange="cargarCarreras()">
+                        <option value="">Seleccionar</option>
+                        <option th:each="f : ${facultades}" th:value="${f.id}" th:text="${f.nombre}"
+                                th:selected="${facultadId != null and facultadId == f.id}"></option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="carreraId">Carrera</label>
+                    <select id="carreraId" name="carreraId" required>
+                        <option value="">Selecciona una facultad primero</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="section-title">Servicio que solicitas</div>
+
+            <div class="row">
+                <div class="form-group">
+                    <label for="areaId">Área</label>
+                    <select id="areaId" name="areaId" required onchange="cargarServicios()">
+                        <option value="">Seleccionar</option>
+                        <option th:each="a : ${areas}" th:value="${a.id}" th:text="${a.nombre}"
+                                th:selected="${areaId != null and areaId == a.id}"></option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="servicioId">Servicio</label>
+                    <select id="servicioId" name="servicioId" required>
+                        <option value="">Selecciona un área primero</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-block" id="btnSubmit" th:disabled="${registroCerrado}">Registrarme</button>
+        </form>
+
+        <p class="admin-link">
+            ¿Eres personal administrativo? <a th:href="@{/auth/login}">Iniciar sesión</a>
+        </p>
+    </div>
+    <div class="footer-version">Sistema de registro de turnos v1.0</div>
+    <script th:inline="javascript">
+        var prefillCarrera = /*[[${carreraId}]]*/ null;
+        var prefillServicio = /*[[${servicioId}]]*/ null;
+
+        function seleccionarOption(select, valor) {
+            for (var i = 0; i < select.options.length; i++) {
+                if (String(select.options[i].value) === String(valor)) {
+                    select.selectedIndex = i;
+                    return;
+                }
+            }
+            select.value = '';
+        }
+
+        function cargarCarreras(seleccionar) {
+            var facultadId = document.getElementById('facultadId').value;
+            var select = document.getElementById('carreraId');
+            select.innerHTML = '<option value="">Cargando...</option>';
+            if (!facultadId) { select.innerHTML = '<option value="">Selecciona una facultad primero</option>'; return; }
+            fetch('/estudiante/carreras?facultadId=' + facultadId)
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    select.innerHTML = '<option value="">Seleccionar carrera</option>';
+                    data.forEach(function(c) {
+                        var opt = document.createElement('option');
+                        opt.value = c.id;
+                        opt.textContent = c.nombre;
+                        select.appendChild(opt);
+                    });
+                    if (seleccionar != null) { seleccionarOption(select, seleccionar); }
+                });
+        }
+        function cargarServicios(seleccionar) {
+            var areaId = document.getElementById('areaId').value;
+            var select = document.getElementById('servicioId');
+            select.innerHTML = '<option value="">Cargando...</option>';
+            if (!areaId) { select.innerHTML = '<option value="">Selecciona un área primero</option>'; return; }
+            fetch('/estudiante/servicios-por-area?areaId=' + areaId)
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    select.innerHTML = '<option value="">Seleccionar servicio</option>';
+                    data.forEach(function(s) {
+                        var opt = document.createElement('option');
+                        opt.value = s.id;
+                        opt.textContent = s.nombre;
+                        select.appendChild(opt);
+                    });
+                    if (seleccionar != null) { seleccionarOption(select, seleccionar); }
+                });
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            if (prefillCarrera != null) { cargarCarreras(prefillCarrera); }
+            if (prefillServicio != null) { cargarServicios(prefillServicio); }
+        });
+
+        // --- Autocompletado primera vez ---
+        var modoNo = false;
+        var datosAuto = null;
+        var camposSombreados = ['nombres','apellidos','correoInstitucional','sexoId','etniaId','facultadId','carreraId'];
+
+        function aplicarModo(){
+            var rbNo = document.getElementById('rbNo');
+            var rbSi = document.getElementById('rbSi');
+            modoNo = rbNo && rbNo.checked;
+            var btn = document.getElementById('btnSubmit');
+            var msgNo = document.getElementById('msgNo');
+            var msgSi = document.getElementById('msgSi');
+            if(rbSi && rbSi.checked){ msgSi.style.display='block'; msgNo.style.display='none'; } else if(modoNo){ msgNo.style.display='block'; msgSi.style.display='none'; } else { msgNo.style.display='none'; msgSi.style.display='none'; }
+            if(modoNo){
+                if(btn) btn.textContent='Aceptar';
+                camposSombreados.forEach(function(id){
+                    var el=document.getElementById(id);
+                    if(el) el.classList.add('campo-sombreado');
+                });
+            } else {
+                if(btn) btn.textContent='Registrarme';
+                camposSombreados.forEach(function(id){
+                    var el=document.getElementById(id);
+                    if(el) el.classList.remove('campo-sombreado');
+                });
+                var st=document.getElementById('autoStatus');
+                if(st) st.style.display='none';
+            }
+        }
+
+        function autocompletar(cedula){
+            var st=document.getElementById('autoStatus');
+            if(!modoNo) return;
+            if(!cedula || cedula.length!==10 || !/^\d{10}$/.test(cedula)){
+                if(st){ st.textContent=''; st.style.display='none';}
+                return;
+            }
+            if(st){ st.textContent='Buscando...'; st.style.display='block'; }
+            fetch('/estudiante/buscar-por-cedula?cedula='+cedula)
+                .then(function(r){return r.json();})
+                .then(function(data){
+                    if(!data || !data.cedula){
+                        if(st){ st.textContent='No encontrado. Completa todos los campos.'; }
+                        camposSombreados.forEach(function(id){
+                            var el=document.getElementById(id);
+                            if(el) el.classList.remove('campo-sombreado');
+                        });
+                        datosAuto=null;
+                        return;
+                    }
+                    datosAuto=data;
+                    document.getElementById('nombres').value=data.nombres||'';
+                    document.getElementById('apellidos').value=data.apellidos||'';
+                    document.getElementById('correoInstitucional').value=data.correo||'';
+                    seleccionarOption(document.getElementById('sexoId'), data.sexoId);
+                    seleccionarOption(document.getElementById('etniaId'), data.etniaId);
+                    if(data.facultadId){
+                        seleccionarOption(document.getElementById('facultadId'), data.facultadId);
+                        cargarCarreras(data.carreraId);
+                    }
+                    camposSombreados.forEach(function(id){
+                        var el=document.getElementById(id);
+                        if(el) el.classList.add('campo-sombreado');
+                    });
+                    if(st){ st.textContent='Datos autocompletados. Elige Área y Servicio y da Aceptar.'; }
+                });
+        }
+
+        function confirmarEnvio(e){
+            if(modoNo && !datosAuto){
+                // si no encontró, permitir registro normal como primera vez
+                return true;
+            }
+            // confirmación simple
+            return confirm(modoNo ? '¿Datos correctos? No podrás corregirlos tú mismo; lo hará el administrador si hay error. ¿Continuar?' : '¿Confirmas tu registro?');
+        }
+
+        document.addEventListener('DOMContentLoaded', function(){
+            var rbSi=document.getElementById('rbSi');
+            var rbNo=document.getElementById('rbNo');
+            if(rbSi) rbSi.addEventListener('change', aplicarModo);
+            if(rbNo) rbNo.addEventListener('change', aplicarModo);
+            var ced=document.getElementById('cedula');
+            if(ced) ced.addEventListener('blur', function(){ autocompletar(this.value.trim()); });
+            // por defecto si viene con error, mantener modo según selección previa (no)
+        });
+    </script>
+</body>
+</html>
