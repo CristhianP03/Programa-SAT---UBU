@@ -50,7 +50,6 @@ src/main/resources/templates/                # Thymeleaf (admin, encargado, estu
 src/main/resources/static/                   # css, img, fonts
 src/test/java/                               # MockMvc ReportesTests, EncargadoVistasTests
 docs/db/schema.sql                           # Esquema y datos semilla
-docs/organigrama-ubu.png                     # Anexo
 ```
 
 ## Roles
