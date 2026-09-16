@@ -1,0 +1,55 @@
+
+RIESGOS ABIERTOS, RECOMENDACIÓN Y REPRODUCCIÓN - UBU UTEQ
+
+RIESGOS ABIERTOS
+1. MAIL_PASSWORD de 16 chars expira o se revoca (Gmail).
+   - El correo informativo y las notificaciones dejan de enviarse si la clave de
+     aplicación expira o es revocada. Hay que generar una nueva en la cuenta de
+     Google y actualizar el archivo .env.
+
+2. PostgreSQL caída en 5432 o validate falla sin docs/db/schema.sql.
+   - Si el servicio de base de datos no está iniciado en el puerto 5432 o no se
+     ha cargado el esquema, la aplicación no inicia porque válida que las tablas
+     existan. Hay que iniciar PostgreSQL y ejecutar el script.
+
+
+RECOMENDACIÓN INMEDIATA DE CONTINUIDAD
+1. Actualizar credenciales de acceso del administrador y de los encargados en el
+   primer ingreso desde el panel de administración y desde el perfil de cada
+   usuario.
+
+2. Programar hora de cierre 18:00 en el dashboard del administrador y probar el
+   cierre automático de 60 segundos. Verificar que a la hora programada la cola
+   se cierra sola.
+
+3. Revisar logs y activar monitoreo. Revisar la tabla de accesos, los registros
+   del sistema y el uso de conexiones para detectar uso anomalo y activar
+   respaldo periodico.
+
+
+LO QUE DEBE HACER LA PROXIMA PERSONA PARA REPRODUCIR Y CONTINUAR
+Pasos simples y en orden para dejar el sistema funcionando y seguir mejorándolo:
+
+1. Clonar el repositorio:
+   git clone https://github.com/CristhianP03/Programa-SAT---UBU.git
+
+2. Copiar la plantilla de configuración y editarla con tus datos:
+   .env.example .env
+   Editar el archivo .env con los datos de base de datos y correo (sin subir
+   este archivo al repositorio).
+
+3. Crear la base de datos:
+   createdb unidad_bienestar_universitariov07
+
+4. Cargar el esquema v6.0 sin tildes (reproducible):
+   psql -d unidad_bienestar_universitariov07 -f docs/db/schema.sql
+
+5. Ejecutar el sistema:
+   ./mvnw spring-boot:run   (Linux/Mac)  o  .\mvnw.cmd spring-boot:run  (Windows)
+   Abrir en el navegador http://localhost:8080
+
+6. Probar y continuar:
+   Registrar un estudiante, ver el turno, iniciar sesión como encargado y
+   revisar la cola, probar el cierre programado a las 18:00 y generar un
+   reporte. Ejecutar ./mvnw test para verificar que todo sigue funcionando.
+   A partir de alli continuar con nuevas mejoras.
